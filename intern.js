@@ -287,3 +287,36 @@ function listenToTodayAllInterns() {
 window.addEventListener("beforeunload", () => {
   if (clockInterval) clearInterval(clockInterval);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+const sidebarToggle = document.getElementById("sidebarToggle");
+const mobileMenu = document.getElementById("mobileMenu");
+const mobileLogoutBtn = document.getElementById("mobileLogoutBtn");
+
+sidebarToggle.addEventListener("click", (event) => {
+  event.stopPropagation();
+  mobileMenu.classList.toggle("active");
+});
+
+mobileLogoutBtn.addEventListener("click", () => {
+  document.getElementById("logoutBtn").click();
+});
+
+document.addEventListener("click", (event) => {
+  if (
+    !mobileMenu.contains(event.target) &&
+    !sidebarToggle.contains(event.target)
+  ) {
+    mobileMenu.classList.remove("active");
+  }
+});
