@@ -1,6 +1,6 @@
 
 
-/** Show a toast notification. type: "success" | "error" | "info" */
+
 export function showToast(message, type = "info", duration = 3500) {
   let container = document.getElementById("toast-container");
   if (!container) {
@@ -30,7 +30,7 @@ function iconFor(type) {
   }
 }
 
-/** Basic HTML escaping to avoid injection when rendering user data */
+
 export function escapeHtml(str) {
   if (str === null || str === undefined) return "";
   return String(str)
@@ -41,7 +41,7 @@ export function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-/** Show / hide a full-page loading spinner overlay */
+
 export function showSpinner() {
   let el = document.getElementById("global-spinner");
   if (!el) {
@@ -58,7 +58,7 @@ export function hideSpinner() {
   if (el) el.classList.remove("spinner-visible");
 }
 
-/** Format a JS Date as YYYY-MM-DD (used as the attendance "date" key) */
+
 export function formatDateKey(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -66,7 +66,7 @@ export function formatDateKey(date = new Date()) {
   return `${y}-${m}-${d}`;
 }
 
-/** Format a JS Date as a readable long date, e.g. "Tuesday, July 21, 2026" */
+
 export function formatLongDate(date = new Date()) {
   return date.toLocaleDateString(undefined, {
     weekday: "long",
@@ -76,7 +76,7 @@ export function formatLongDate(date = new Date()) {
   });
 }
 
-/** Format a JS Date as HH:MM:SS AM/PM */
+
 export function formatTime(date = new Date()) {
   return date.toLocaleTimeString(undefined, {
     hour: "2-digit",
@@ -85,13 +85,13 @@ export function formatTime(date = new Date()) {
   });
 }
 
-/** Format a JS Date as a short readable time, e.g. "9:03 AM" */
+
 export function formatShortTime(date) {
   if (!date) return "--";
   return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
 }
 
-/** Convert a decimal-hours number into "Xh Ym" */
+
 export function formatHoursMinutes(decimalHours) {
   const totalMinutes = Math.round(decimalHours * 60);
   const h = Math.floor(totalMinutes / 60);
@@ -99,12 +99,12 @@ export function formatHoursMinutes(decimalHours) {
   return `${h}h ${m}m`;
 }
 
-/** Difference in decimal hours between two JS Dates */
+
 export function diffInHours(start, end) {
   return (end.getTime() - start.getTime()) / (1000 * 60 * 60);
 }
 
-/** Clamp a number between min and max */
+
 export function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
 }
