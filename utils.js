@@ -1,7 +1,4 @@
-// ============================================================
-// utils.js
-// Shared helper functions used across all pages
-// ============================================================
+
 
 /** Show a toast notification. type: "success" | "error" | "info" */
 export function showToast(message, type = "info", duration = 3500) {
