@@ -34,9 +34,7 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-// ------------------------------------------------------------
-// TODO: Replace with your own Firebase project credentials
-// ------------------------------------------------------------
+
 const firebaseConfig = {
   apiKey: "AIzaSyCwuTXFIA_J0bJDb_I3Qs3hlyCBt0pLQks",
   authDomain: "interntract.firebaseapp.com",
