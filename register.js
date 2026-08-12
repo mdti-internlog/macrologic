@@ -1,7 +1,4 @@
-// ============================================================
-// register.js — register.html
-// Handles Intern and Admin account creation
-// ============================================================
+
 
 import {
   auth, db,
