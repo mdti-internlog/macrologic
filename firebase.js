@@ -1,13 +1,4 @@
-// ============================================================
-// firebase.js
-// Firebase initialization + shared exports for InternTrack
-// ------------------------------------------------------------
-// 1) Replace firebaseConfig below with your project's config
-//    (Firebase Console > Project Settings > General > Your apps)
-// 2) Enable Email/Password sign-in under Authentication > Sign-in method
-// 3) Create a Firestore database (production mode) and paste the
-//    rules from firestore.rules into Firestore > Rules
-// ============================================================
+
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
