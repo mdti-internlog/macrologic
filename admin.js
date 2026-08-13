@@ -237,6 +237,9 @@ async function updateInternProfileDetails(id, changes) {
   if (!id || !changes || Object.keys(changes).length === 0) return false;
 
   const userRef = doc(db, "users", id);
+  const currentUserSnap = await getDoc(userRef);
+  const currentUser = currentUserSnap.exists() ? currentUserSnap.data() : {};
+
   const userChanges = {};
   const attendanceChanges = {};
 
@@ -250,19 +253,36 @@ async function updateInternProfileDetails(id, changes) {
   }
 
   if (changes.school !== undefined) {
-    const trimmedSchool = (changes.school || "").trim();
-    userChanges.school = trimmedSchool;
+    userChanges.school = (changes.school || "").trim();
   }
 
   if (changes.course !== undefined) {
-    const trimmedCourse = (changes.course || "").trim();
-    userChanges.course = trimmedCourse;
+    userChanges.course = (changes.course || "").trim();
   }
 
   if (changes.department !== undefined) {
-    const trimmedDepartment = (changes.department || "").trim();
-    userChanges.department = trimmedDepartment;
-    attendanceChanges.department = trimmedDepartment;
+    userChanges.department = (changes.department || "").trim();
+    attendanceChanges.department = userChanges.department;
+  }
+
+  if (changes.phone !== undefined) {
+    userChanges.phone = (changes.phone || "").trim();
+  }
+
+  if (changes.studentId !== undefined) {
+    userChanges.studentId = (changes.studentId || "").trim();
+  }
+
+  if (changes.startDate !== undefined) {
+    const trimmedStartDate = (changes.startDate || "").trim();
+    userChanges.startDate = trimmedStartDate;
+  }
+
+  if (changes.requiredHours !== undefined) {
+    const nextRequiredHours = Number(changes.requiredHours) || 0;
+    userChanges.requiredHours = nextRequiredHours;
+    const currentRenderedHours = Number(currentUser.renderedHours) || 0;
+    userChanges.remainingHours = Math.max(nextRequiredHours - currentRenderedHours, 0);
   }
 
   if (Object.keys(userChanges).length > 0) {
