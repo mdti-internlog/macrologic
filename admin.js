@@ -68,7 +68,10 @@ const el = {
 
   profileName: document.getElementById("adminProfileName"),
   profileEmail: document.getElementById("adminProfileEmail"),
-  profileDept: document.getElementById("adminProfileDepartment")
+  profileDept: document.getElementById("adminProfileDepartment"),
+
+  internEditModal: document.getElementById("internEditModal"),
+  internEditForm: document.getElementById("internEditForm")
 };
 
 init();
@@ -107,6 +110,12 @@ async function init() {
   el.manualInternSelect?.addEventListener("change", loadManualAttendanceRecord);
   el.manualAttendanceDate?.addEventListener("change", loadManualAttendanceRecord);
   el.discardAttendanceBtn?.addEventListener("click", handleDiscardAttendance);
+  el.internEditForm?.addEventListener("submit", handleInternEditSubmit);
+  el.internEditModal?.addEventListener("click", (event) => {
+    if (event.target.matches("[data-close-modal='true']") || event.target === el.internEditModal) {
+      closeInternEditModal();
+    }
+  });
   if (el.manualAttendanceDate) el.manualAttendanceDate.value = formatDateKey();
 }
 
@@ -190,7 +199,7 @@ function renderInternTable() {
     .filter((i) => !search || i.name?.toLowerCase().includes(search) || i.department?.toLowerCase().includes(search));
 
   if (rows.length === 0) {
-    el.internTableBody.innerHTML = `<tr><td colspan="8" class="empty-row">No interns found.</td></tr>`;
+    el.internTableBody.innerHTML = `<tr><td colspan="9" class="empty-row">No interns found.</td></tr>`;
     return;
   }
 
@@ -200,14 +209,16 @@ function renderInternTable() {
       return `
       <tr>
         <td>${escapeHtml(i.name)}</td>
-        <td>${escapeHtml(i.department)}</td>
-        <td>${escapeHtml(i.school)}</td>
+        <td>${escapeHtml(i.department || "—")}</td>
+        <td>${escapeHtml(i.course || "—")}</td>
+        <td>${escapeHtml(i.school || "—")}</td>
         <td>${escapeHtml(i.startDate)}</td>
         <td>${formatHoursMinutes(i.requiredHours || 0)}</td>
         <td>${formatHoursMinutes(i.renderedHours || 0)}</td>
         <td>${completionDate ? escapeHtml(completionDate) : "—"}</td>
         <td class="table-actions">
           <button class="btn-icon" data-action="view" data-id="${i.id}" title="View profile">👁</button>
+          <button class="btn-icon" data-action="edit" data-id="${i.id}" title="Edit student details">✏️</button>
           <button class="btn-icon" data-action="deactivate" data-id="${i.id}" title="${i.status === "deactivated" ? "Activate" : "Deactivate"}">
             ${i.status === "deactivated" ? "▶" : "⏸"}
           </button>
@@ -222,17 +233,160 @@ function renderInternTable() {
   });
 }
 
+async function updateInternProfileDetails(id, changes) {
+  if (!id || !changes || Object.keys(changes).length === 0) return false;
+
+  const userRef = doc(db, "users", id);
+  const userChanges = {};
+  const attendanceChanges = {};
+
+  if (changes.name !== undefined) {
+    const trimmedName = (changes.name || "").trim();
+    if (!trimmedName) {
+      throw new Error("Intern name cannot be empty.");
+    }
+    userChanges.name = trimmedName;
+    attendanceChanges.userName = trimmedName;
+  }
+
+  if (changes.school !== undefined) {
+    const trimmedSchool = (changes.school || "").trim();
+    userChanges.school = trimmedSchool;
+  }
+
+  if (changes.course !== undefined) {
+    const trimmedCourse = (changes.course || "").trim();
+    userChanges.course = trimmedCourse;
+  }
+
+  if (changes.department !== undefined) {
+    const trimmedDepartment = (changes.department || "").trim();
+    userChanges.department = trimmedDepartment;
+    attendanceChanges.department = trimmedDepartment;
+  }
+
+  if (Object.keys(userChanges).length > 0) {
+    await updateDoc(userRef, userChanges);
+  }
+
+  const attendanceSnap = await getDocs(query(collection(db, "attendance"), where("userId", "==", id)));
+  if (attendanceSnap.docs.length > 0 && Object.keys(attendanceChanges).length > 0) {
+    await Promise.all(
+      attendanceSnap.docs.map((record) => updateDoc(doc(db, "attendance", record.id), attendanceChanges))
+    );
+  }
+
+  return true;
+}
+
+function openInternEditModal(intern) {
+  if (!el.internEditModal || !el.internEditForm) return;
+
+  el.internEditModal.dataset.internId = intern.id;
+  el.internEditModal.classList.remove("hidden");
+  el.internEditModal.setAttribute("aria-hidden", "false");
+
+  const formData = new FormData(el.internEditForm);
+  const fields = {
+    name: intern.name || "",
+    school: intern.school || "",
+    course: intern.course || "",
+    department: intern.department || "",
+    phone: intern.phone || "",
+    studentId: intern.studentId || "",
+    startDate: intern.startDate || "",
+    requiredHours: intern.requiredHours ?? ""
+  };
+
+  Object.entries(fields).forEach(([key, value]) => {
+    const input = el.internEditForm.elements.namedItem(key);
+    if (input) input.value = value;
+  });
+}
+
+function closeInternEditModal() {
+  if (!el.internEditModal) return;
+  el.internEditModal.classList.add("hidden");
+  el.internEditModal.setAttribute("aria-hidden", "true");
+  delete el.internEditModal.dataset.internId;
+  el.internEditForm?.reset();
+}
+
+async function handleInternEditSubmit(event) {
+  event.preventDefault();
+  if (!el.internEditModal || !el.internEditForm) return;
+
+  const userId = el.internEditModal.dataset.internId;
+  if (!userId) return;
+
+  const formData = new FormData(el.internEditForm);
+  const intern = allInterns.find((item) => item.id === userId);
+  if (!intern) {
+    showToast("Selected student not found.", "error");
+    return;
+  }
+
+  const nextName = String(formData.get("name") || "").trim();
+  const nextSchool = String(formData.get("school") || "").trim();
+  const nextCourse = String(formData.get("course") || "").trim();
+  const nextDepartment = String(formData.get("department") || "").trim();
+  const nextPhone = String(formData.get("phone") || "").trim();
+  const nextStudentId = String(formData.get("studentId") || "").trim();
+  const nextStartDate = String(formData.get("startDate") || "").trim();
+  const rawRequiredHours = String(formData.get("requiredHours") || "").trim();
+  const nextRequiredHours = rawRequiredHours === "" ? 0 : Number(rawRequiredHours);
+
+  if (!nextName || !nextSchool || !nextCourse || !nextDepartment) {
+    showToast("Name, school, course, and department are required.", "error");
+    return;
+  }
+
+  if (rawRequiredHours !== "" && Number.isNaN(nextRequiredHours)) {
+    showToast("Required hours must be a valid number.", "error");
+    return;
+  }
+
+  const changes = {};
+  if (nextName !== (intern.name || "")) changes.name = nextName;
+  if (nextSchool !== (intern.school || "")) changes.school = nextSchool;
+  if (nextCourse !== (intern.course || "")) changes.course = nextCourse;
+  if (nextDepartment !== (intern.department || "")) changes.department = nextDepartment;
+  if (nextPhone !== (intern.phone || "")) changes.phone = nextPhone;
+  if (nextStudentId !== (intern.studentId || "")) changes.studentId = nextStudentId;
+  if (nextStartDate !== (intern.startDate || "")) changes.startDate = nextStartDate;
+  if ((Number(intern.requiredHours) || 0) !== nextRequiredHours) changes.requiredHours = nextRequiredHours;
+
+  if (Object.keys(changes).length === 0) {
+    showToast("No changes were made.", "info");
+    return;
+  }
+
+  try {
+    await updateInternProfileDetails(userId, changes);
+    closeInternEditModal();
+    showToast("Student information updated successfully.", "success");
+  } catch (err) {
+    console.error(err);
+    showToast(err.message || "Failed to update student information.", "error");
+  }
+}
+
 async function handleInternAction(action, id) {
   const intern = allInterns.find((i) => i.id === id);
   if (!intern) return;
 
   if (action === "view") {
     alert(
-      `Name: ${intern.name}\nDepartment: ${intern.department}\nSchool: ${intern.school}\n` +
+      `Name: ${intern.name}\nDepartment: ${intern.department}\nCourse: ${intern.course || "—"}\nSchool: ${intern.school}\n` +
       `Start Date: ${intern.startDate}\nRequired Hours: ${formatHoursMinutes(intern.requiredHours || 0)}\n` +
       `Rendered Hours: ${formatHoursMinutes(intern.renderedHours || 0)}\nRemaining Hours: ${formatHoursMinutes(intern.remainingHours || 0)}\n` +
       `Phone: ${intern.phone || "—"}\nStudent ID: ${intern.studentId || "—"}`
     );
+    return;
+  }
+
+  if (action === "edit") {
+    openInternEditModal(intern);
     return;
   }
 
