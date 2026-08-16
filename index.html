@@ -2,6 +2,17 @@
 <html lang="en">
 <head>
  <link rel="icon" type="image/png" href="macro.png"> 
+
+
+<!-- PWA -->
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0b1f3a">
+<link rel="apple-touch-icon" href="./interntrack-icon-192x192.png">
+
+
+
+ 
   
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -83,5 +94,24 @@
 
 
 <script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+
+
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("./service-worker.js")
+        .then((registration) => {
+          console.log("Service Worker registered:", registration.scope);
+        })
+        .catch((error) => {
+          console.error("Service Worker registration failed:", error);
+        });
+    });
+  }
+</script>
+
+
+ 
 </body>
 </html>
