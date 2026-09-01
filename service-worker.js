@@ -1,4 +1,9 @@
-const CACHE_NAME = "interntrack-v3";
+//old
+//const CACHE_NAME = "interntrack-v3";
+
+//new
+const CACHE_NAME = "interntrack-v4";
+//end of new
 
 const APP_FILES = [
   "./",
